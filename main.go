@@ -88,6 +88,7 @@ func main() {
 		}
 		c.Response().Header().Set("cached", "true")
 		c.Response().Header().Set("update-time", data[tickerId].age.Format(time.RFC3339))
+		c.Response().Header().Set("price-age", fmt.Sprintf("%.2fs", time.Now().Sub(data[tickerId].age).Seconds()))
 		return c.JSONBlob(http.StatusOK, data[tickerId].data)
 	})
 
@@ -101,7 +102,7 @@ func main() {
 				logger.Info().Msg("No tickers to update")
 				continue
 			}
-			for k, v := range data {
+			for k, _ := range data {
 				url = fmt.Sprintf("https://api.coingecko.com/api/v3/coins/%s?tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false", k)
 				logger.Info().Str("ticker", k).Msg("Updating ticker")
 				req, err := http.NewRequest("GET", url, nil)
@@ -123,8 +124,10 @@ func main() {
 				}
 				resp.Body.Close()
 				mut.Lock()
-				v.data = bodyBytes
-				v.age = time.Now()
+				data[k] = ticker{
+					data: bodyBytes,
+					age:  time.Now(),
+				}
 				mut.Unlock()
 				logger.Info().Str("ticker", k).Msg("Ticker updated")
 			}
