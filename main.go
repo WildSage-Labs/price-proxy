@@ -131,6 +131,7 @@ func main() {
 				}
 				mut.Unlock()
 				logger.Info().Str("ticker", k).Msg("Ticker updated")
+				time.Sleep(time.Second * 3)
 			}
 
 		}
