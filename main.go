@@ -56,25 +56,26 @@ func main() {
 			mut.Lock()
 			defer mut.Unlock()
 
-			data[tickerId] = ticker{
-				data: []byte("{}"),
-				age:  time.Now(),
-			}
-
 			req, err := http.NewRequest("GET", url, nil)
 			if err != nil {
-				e.Logger.Warn(fmt.Sprintf("Failed to create request! Error was: %s", err.Error()))
+				logger.Warn().Msg(fmt.Sprintf("Failed to create request! Error was: %s", err.Error()))
 				return c.String(400, "Request error")
 			}
 			resp, err := webClient.Do(req)
 			if err != nil {
-				e.Logger.Warn(fmt.Sprintf("Failed to do web request! Error was: %s", err.Error()))
+				logger.Warn().Msg(fmt.Sprintf("Failed to do web request! Error was: %s", err.Error()))
 				return c.String(400, "Request error")
 			}
+
+			if resp.StatusCode != 200 {
+				logger.Warn().Msg(fmt.Sprintf("Exptected status 200, got %d", resp.StatusCode))
+				return c.String(resp.StatusCode, "Request error")
+			}
+
 			defer resp.Body.Close()
 			bodyBytes, err := io.ReadAll(resp.Body)
 			if err != nil {
-				e.Logger.Warn(fmt.Sprintf("Failed to read response body! Error was: %s", err.Error()))
+				logger.Warn().Msg(fmt.Sprintf("Failed to read response body! Error was: %s", err.Error()))
 				return c.String(400, "Request error")
 			}
 
@@ -97,7 +98,7 @@ func main() {
 		// Start the update thread
 		url := ""
 		for {
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Second * 20)
 			if len(data) == 0 {
 				logger.Info().Msg("No tickers to update")
 				continue
